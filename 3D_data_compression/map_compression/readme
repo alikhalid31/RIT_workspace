@@ -1,0 +1,25 @@
+1-append-frame_name
+	append the name of frame as an additional attribute to all the points
+2-find_closest_frame 
+	find the closest frame in the reference data for all the frames in the data under considereration 
+3-build_map 
+	build a map from individual frames
+4-map_compression
+	comopress the data by building a map for reference_day and compress_dat and then performing diff operation 
+4a-map_compression
+	use reference_day to find the points_to_add and points_to_remove frame by frame
+4a2-map_compression
+	use reference_day to find the points_to_add and points_to_remove frame by frame and then convert some of the points in points to add to to index using basemap
+4b-map_compression_octree
+	build an octree for all the frames and then compress them 
+4c-map_compression_basemap
+	use basemap to find points_to_add and reference day + basemap to find the static part
+4d-map_compression_basemap_only 
+	use basemap to find the points_to_add and compress_day+basemap to find the static part
+6-error_calculations 
+	find rmse between the reconstructed and actual data. (pcds/plys)
+7-convert_format
+	conver pcds to bin or ply
+8-compress text file 
+	compress the indices of points stored in the text file
+
