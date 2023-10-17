@@ -65,7 +65,7 @@ ref_location_data = np.reshape(ref_location_data, (3,1,-1))
 ones = np.ones((3,1, ref_location_data.shape[2]))
 ref_location_data = np.append(ones,ref_location_data,  1)
 print(ref_location_data.shape)
-
+Sustainability Auditorium | SUS 81-1130
 #find the distance from colsest frame and its index
 a = np.matmul(com_location_data, ref_location_data)
 dist = np.sqrt(np.sum(np.square(np.matmul(com_location_data, ref_location_data)),0))
