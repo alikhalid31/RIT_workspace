@@ -1,0 +1,23 @@
+Serquency of operations to handle ford dataset:
+	- download ford dataset/ 
+	- accumulate pcds in 'map' folders to create a basemap 
+		- 3-build_map/build_map_ford.cpp or ford_dataset_manupulation/create_basemap.py
+		- python bag_to_csv /path/to/your/bag/file/name.bag /path/to/the/config/file/name.yaml
+	- convert poses in bag to csv files 
+		- ford_dataset_manupulation/bag_to_pcd.py and ford_dataset_manupulation/config,yaml
+	- convert velodyne scans bag file to sensor_msgs/PointCloud2 bag file
+		- clone ford repo (https://github.com/Ford/AVData.git) in catkin_ws/src
+		- catkin_make and source devel/setup.bash 
+		- run these commands in seperate terminals
+			- roslaunch ford_demo demo.launch map_dir:=/path/to/map/folder/ calibration_dir:=/path/to/calibration/folder/
+			- roslaunch ford_demo multi_lidar_convert.launch
+			- rosbag record -e "(.*)_pointcloud(.*)"
+			- rosbag play /path/to/your/bag/file/name.bag
+	- extract pcds form the sensor_msgs/PointCloud2 bag file creted 
+		- rosrun pcl_ros bag_to_pcd <input_file.bag> <topic> <output_directory>
+	- The timestamps of the pose and the pcds extracted from bag file are not exactly same. Find the nearest timestamp pose for each pcd.
+		- ford_dataset_manupulation/associate_pose.py 
+
+	- if you want to accummulate pcds from different lidars (red, green, blue, yellow)
+		- ford_dataset_manupulation/unix-diff.py
+	- if you want to create a pose for the merged pcds, do it as done for individual lidar. 

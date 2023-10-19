@@ -15,3 +15,6 @@ add_definitions(${PCL_DEFINITIONS})
 add_executable (build_map build_map.cpp)
 target_link_libraries (build_map ${PCL_LIBRARIES})
 
+
+add_executable (build_map_ford build_map_ford.cpp)
+target_link_libraries (build_map_ford ${PCL_LIBRARIES})
