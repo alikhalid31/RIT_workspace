@@ -26,12 +26,12 @@ Eigen::Matrix4f get_transformation_matrix(std::vector<std::string> );
 int main (int argc, char** argv)
 {
     std::string data_path = std::string(argv[1]);
-    std::string basemap_path = std::string(argv[2]);
-    std::string reference_day_path = data_path + "/" +std::string(argv[3]);
-    std::string recover_day_path = data_path + "/" + std::string(argv[4]);
-    float resolution = atof(argv[5]);
-    std::string input_folder = std::string(argv[6]);
-    std::string output_folder = std::string(argv[7]);
+    std::string basemap_path = data_path;
+    std::string reference_day_path = data_path + "/" +std::string(argv[2]);
+    std::string recover_day_path = data_path + "/" + std::string(argv[3]);
+    float resolution = atof(argv[4]);
+    std::string input_folder = std::string(argv[5]);
+    std::string output_folder = std::string(argv[6]);
 
     recover_frame (recover_day_path, reference_day_path, basemap_path,resolution, input_folder, output_folder);
 
@@ -55,7 +55,7 @@ int recover_frame (std::string recover_day_path, std::string reference_day_path,
     float avg_wload, avg_woload;
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr base_cloud (new pcl::PointCloud<pcl::PointXYZ> );
-    pcl::io::loadPCDFile<pcl::PointXYZ>(basemap_path+"/complete_pcl.pcd", *base_cloud);
+    pcl::io::loadPCDFile<pcl::PointXYZ>(basemap_path+"/basemap.pcd", *base_cloud);
     pcl::ExtractIndices<pcl::PointXYZ> extract_base;
     extract_base.setInputCloud (base_cloud);
     extract_base.setNegative (false);
@@ -73,7 +73,7 @@ int recover_frame (std::string recover_day_path, std::string reference_day_path,
     while (getline (association_file, line )) 
     {
 
-        std::vector<std::string> split_line = splitString(line, ',');
+        std::vector<std::string> split_line = splitString(line, ' ');
         std::string recover_frame = split_line[0];
         std::string reference_frame = split_line[1];
         float distance = std::stof(split_line[2]);

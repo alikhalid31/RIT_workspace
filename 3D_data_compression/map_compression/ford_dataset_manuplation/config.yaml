@@ -1,0 +1,16 @@
+#This file is used by bag_to_csv.py to determine topics to be converted or excluded
+topicsToBeAdded:
+  - '/pose_ground_truth'
+  - '/pose_localized'
+  - '/pose_raw'
+  - '/tf'
+topicsToBeExcluded:
+  - '/velocity_raw'
+  - '/gps'
+  - '/gps_time'
+  - '/imu'
+  - '/image_front_left'
+  - '/lidar_blue_scan' 
+  - '/lidar_red_scan' 
+  - '/lidar_yellow_scan' 
+  - '/lidar_green_scan' 

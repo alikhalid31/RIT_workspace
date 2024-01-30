@@ -35,6 +35,7 @@ int main (int argc, char** argv)
     std::string dataset_folder = std::string(argv[1]);
 
     std::vector<std::string> dirs = get_directories(dataset_folder);
+    
     for (auto i: dirs)
     {
         std::cout << i << std::endl;
