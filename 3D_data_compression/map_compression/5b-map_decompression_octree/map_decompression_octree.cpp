@@ -57,7 +57,7 @@ int decompress_frames(std::string compress_day_path, float resolution, std:: str
         }
 
 
-    for (const auto & entry : std::filesystem::directory_iterator(compress_day_path+"/octree_0.9/compression_4b_0.1"))
+    for (const auto & entry : std::filesystem::directory_iterator(compress_day_path+ "/"+input_folder))
     {
         std::cout << entry.path() << std::endl;
         decompress_frame(compress_day_path, entry.path(), resolution, input_folder, output_folder, showStatistics, VoxelGridDownDownSampling,run_time_1, run_time_2, run_time_3, run_time_4);

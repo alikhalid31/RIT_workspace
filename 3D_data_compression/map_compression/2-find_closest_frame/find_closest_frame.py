@@ -26,9 +26,12 @@ com_pose_file = com_path + '/pose.txt'
 # ------ load position of to be compressed frames
 
 ################ used whwen there is .pcd in the name of frame in the pose file 
-compress_df = pd.read_csv(com_pose_file, sep=",", header=None, float_precision='round_trip')
+# compress_df = pd.read_csv(com_pose_file, sep=" ", header=None, float_precision='round_trip')
+compress_df = pd.read_csv(com_pose_file, sep=" ", header=None, float_precision='round_trip', dtype= {0: 'object'})
+
+# print(compress_df)
 # compress_df[compress_df.columns[0]] = compress_df[compress_df.columns[0]].apply(remove_extension)
-# compress_df[compress_df.columns[0]] = compress_df[compress_df.columns[0]].astype('float64')
+compress_df[compress_df.columns[0]] = compress_df[compress_df.columns[0]].astype('object')
 com_frame_names = compress_df[compress_df.columns[0]].to_numpy()
 com_location_data = compress_df[compress_df.columns[x:z+1]].to_numpy()
 com_location_data= np.transpose(com_location_data)
@@ -47,9 +50,9 @@ print(com_location_data.shape)
 
 ################ used whwen there is .pcd in the name of frame in the pose file 
 
-reference_df = pd.read_csv(ref_pose_file, sep=",", header=None, float_precision='round_trip')
+reference_df = pd.read_csv(ref_pose_file, sep=" ", header=None, float_precision='round_trip', dtype= {0: 'object'})
 # reference_df[reference_df.columns[0]] = reference_df[reference_df.columns[0]].apply(remove_extension)
-# reference_df[reference_df.columns[0]] = reference_df[reference_df.columns[0]].astype('float64')
+reference_df[reference_df.columns[0]] = reference_df[reference_df.columns[0]].astype('object')
 ref_frame_names = reference_df[reference_df.columns[0]].to_numpy()
 ref_location_data = reference_df[reference_df.columns[x:z+1]].to_numpy()
 ref_location_data = np.transpose(ref_location_data)
@@ -65,7 +68,6 @@ ref_location_data = np.reshape(ref_location_data, (3,1,-1))
 ones = np.ones((3,1, ref_location_data.shape[2]))
 ref_location_data = np.append(ones,ref_location_data,  1)
 print(ref_location_data.shape)
-Sustainability Auditorium | SUS 81-1130
 #find the distance from colsest frame and its index
 a = np.matmul(com_location_data, ref_location_data)
 dist = np.sqrt(np.sum(np.square(np.matmul(com_location_data, ref_location_data)),0))

@@ -6,6 +6,23 @@ import open3d as o3d
 import math
 
 
+
+# alpha =  yaw, beta = pitch, gamma = roll
+def rot2eul(R):
+    beta = -np.arcsin(R[2,0])
+    alpha = np.arctan2(R[2,1]/np.cos(beta),R[2,2]/np.cos(beta))
+    gamma = np.arctan2(R[1,0]/np.cos(beta),R[0,0]/np.cos(beta))
+    return np.array((alpha, beta, gamma))
+
+def eul2rot(theta) :
+
+    R = np.array([[np.cos(theta[1])*np.cos(theta[2]),       np.sin(theta[0])*np.sin(theta[1])*np.cos(theta[2]) - np.sin(theta[2])*np.cos(theta[0]),      np.sin(theta[1])*np.cos(theta[0])*np.cos(theta[2]) + np.sin(theta[0])*np.sin(theta[2])],
+                  [np.sin(theta[2])*np.cos(theta[1]),       np.sin(theta[0])*np.sin(theta[1])*np.sin(theta[2]) + np.cos(theta[0])*np.cos(theta[2]),      np.sin(theta[1])*np.sin(theta[2])*np.cos(theta[0]) - np.sin(theta[0])*np.cos(theta[2])],
+                  [-np.sin(theta[1]),                        np.sin(theta[0])*np.cos(theta[1]),                                                           np.cos(theta[0])*np.cos(theta[1])]])
+
+    return R
+
+
 def remove_extension(integer):
     return integer[:-4]
 
@@ -76,32 +93,42 @@ def find_associated_pose( pcd_folder, csv, out_path, output_name ):
 
 def main():
     ## Add parser
-    parser = argparse.ArgumentParser(description="Convert .pcd to .bin")
+    parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--data_path",
-        help=".pcd file path.",
+        "--input_folder",
+        help=".txt file containing transformation matrices.",
         type=str,
-        default="/home/ak5013/dataset/Sample-Data"
-    )
-    parser.add_argument(
-        "--pcd_folder",
-        help=".pcd file path.",
-        type=str,
-        default="blue-pcds"
-    )
-    parser.add_argument(
-        "--pose_csv",
-        help=".pcd file path.",
-        type=str,
-        default="/home/ak5013/dataset/Sample-Data/Sample-Dat/pose_localized.csv"
+        default="/home/ak5013/dataset/map-compression-data/real-world/RIT_DATA/day1"
     )
 
     args = parser.parse_args()
-    
+    pcds_folder = args.input_folder +"/pcds"
+    pose = open(args.input_folder +"/pose.txt", "w")
+    transformation_matrix = open(args.input_folder +"/ndt.txt", 'r').read().splitlines()
+    transformation_matrix= list(map(str.split, filter(lambda x: x != '4 4', transformation_matrix)))
+    transformation_matrix = [np.array(transformation_matrix[i:i+4]) for i in range(0, len(transformation_matrix), 4)]
+    print(transformation_matrix[0])
+    print(transformation_matrix[0][0:3,0:3])
+    print(transformation_matrix[0][0:3,3])
 
-    find_associated_pose(os.path.join(args.data_path,args.pcd_folder), args.pose_csv , args.data_path, 'pose.txt')
-    
+    # print(os.listdir(pcds_folder))
+    pcd_list = sorted(os.listdir(pcds_folder))
+
+    for i, matrix in enumerate(transformation_matrix):
+        R= matrix[0:3,0:3].astype(np.float)
+        T= matrix[0:3,3].astype(np.float)
+        euler = rot2eul(R)
+        frame = remove_extension(pcd_list[i])
+        x = str(T[0])
+        y = str(T[1])
+        z = str(T[2])
+        yaw = str(euler[0])
+        pitch = str(euler[1])
+        roll = str(euler[2])
+        pose.write(frame + " " + x + " " + y + " " + z + " " + yaw + " " + pitch + " " + roll)
+        pose.write ("\n")
+    pose.close()
 
 
 if __name__ == "__main__":

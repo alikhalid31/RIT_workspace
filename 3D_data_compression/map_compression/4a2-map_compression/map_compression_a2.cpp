@@ -31,12 +31,14 @@ int main (int argc, char** argv)
 
 {
     std::string dataset_folder = std::string(argv[1]);
-    std::string basemap_path = std::string(argv[2]);
-    std::string reference_day_path = dataset_folder + "/" +std::string(argv[3]);
-    std::string compress_day_path = dataset_folder + "/" + std::string(argv[4]);
-    float resolution = atof(argv[5]);
-    std::string output_folder = std::string(argv[6]);
-    int method = atoi(argv[7]);
+    // std::string basemap_path = std::string(argv[2]);
+    std::string basemap_path = dataset_folder;
+
+    std::string reference_day_path = dataset_folder + "/" +std::string(argv[2]);
+    std::string compress_day_path = dataset_folder + "/" + std::string(argv[3]);
+    float resolution = atof(argv[4]);
+    std::string output_folder = std::string(argv[5]);
+    int method = atoi(argv[6]);
 
     compress_frames(compress_day_path, reference_day_path,basemap_path, resolution, output_folder, method);
 
@@ -51,7 +53,6 @@ int compress_frames (std::string compress_day_path, std::string reference_day_pa
     std::vector<float> run_time_total_wload, run_time_total_woload;
     float avg_wload, avg_woload;
 
-    pcl::PointCloud<pcl::PointXYZ>::Ptr change_add (new pcl::PointCloud<pcl::PointXYZ> );
     pcl::ExtractIndices<pcl::PointXYZ> extract_base_R;
 
     //loding base map point cloud and downsampling it 
@@ -60,7 +61,7 @@ int compress_frames (std::string compress_day_path, std::string reference_day_pa
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr base_cloud (new pcl::PointCloud<pcl::PointXYZ> );
     //pcl::io::loadPCDFile<pcl::PointXYZ>(basemap_path+"/complete_pcl.pcd", *base_cloud);
-    pcl::io::loadPCDFile<pcl::PointXYZ>(basemap_path+"/basemap_day1.pcd", *base_cloud);
+    pcl::io::loadPCDFile<pcl::PointXYZ>(basemap_path+"/basemap.pcd", *base_cloud);
 
     std::cout << "base map read" << std::endl;
     std::cout << "creating base map kdtree" << std::endl;
@@ -93,6 +94,8 @@ int compress_frames (std::string compress_day_path, std::string reference_day_pa
         float distance = std::stof(split_line[2]);
         std::vector<int> indices_to_remove;
         std::vector<int> indices_to_add;
+        pcl::PointCloud<pcl::PointXYZ>::Ptr change_add (new pcl::PointCloud<pcl::PointXYZ> );
+
 
         std::cout <<compress_frame<<std::endl;
 
@@ -100,6 +103,7 @@ int compress_frames (std::string compress_day_path, std::string reference_day_pa
           change_add, indices_to_remove, indices_to_add, distance, resolution,run_time_1, run_time_2, run_time_3,  method ) == 0 )
         {   
             std::string remove_results_folder = compress_day_path + "/" + output_folder + "/remove_indices" ;
+            std::string pcd_subset_folder = compress_day_path + "/subset_pcds" ;
             std::string add_results_folder = compress_day_path + "/" + output_folder + "/add" ;
             std::string add_indices_results_folder = compress_day_path + "/" + output_folder + "/add_indices" ;
 
@@ -119,20 +123,26 @@ int compress_frames (std::string compress_day_path, std::string reference_day_pa
                 std::filesystem::create_directories(add_indices_results_folder);
             }
 
-            if(change_add->size() > 0)
-            {
-                pcl::io::savePCDFileASCII (add_results_folder+"/"+ compress_frame +".pcd", *change_add);
+            if (!std::filesystem::is_directory(pcd_subset_folder) || !std::filesystem::exists(pcd_subset_folder)) 
+            { 
+                std::filesystem::create_directories(pcd_subset_folder);
             }
+
+            // if(change_add->size() > 0)
+            // {
+            //     pcl::io::savePCDFileASCII (add_results_folder+"/"+ compress_frame +".pcd", *change_add);
             
-            std::ofstream outfile(remove_results_folder+"/"+ compress_frame +".dat", std::ios::out | std::ofstream::binary);
-            std::ostream_iterator<int> out_itr(outfile, "\n"); 
-            std::copy(indices_to_remove.begin(), indices_to_remove.end(),out_itr );
-            outfile.close();
-                        
-            std::ofstream outfile1(add_indices_results_folder+"/"+ compress_frame +".dat", std::ios::out | std::ofstream::binary);
-            std::ostream_iterator<int> out_itr1(outfile1, "\n"); 
-            std::copy(indices_to_add.begin(), indices_to_add.end(),out_itr1 );
-            outfile1.close();
+            //     std::ofstream outfile(remove_results_folder+"/"+ compress_frame +".dat", std::ios::out | std::ofstream::binary);
+            //     std::ostream_iterator<int> out_itr(outfile, "\n"); 
+            //     std::copy(indices_to_remove.begin(), indices_to_remove.end(),out_itr );
+            //     outfile.close();
+                            
+            //     std::ofstream outfile1(add_indices_results_folder+"/"+ compress_frame +".dat", std::ios::out | std::ofstream::binary);
+            //     std::ostream_iterator<int> out_itr1(outfile1, "\n"); 
+            //     std::copy(indices_to_add.begin(), indices_to_add.end(),out_itr1 );
+            //     outfile1.close();
+
+            // }
 
             run_time_4.push_back(clock());
 
@@ -176,17 +186,23 @@ float distance, float resolution, std::vector<float>& run_time_1, std::vector<fl
     {
         std::vector<std::string> pose = get_pose(compress_day_path+"/pose.txt", compress_frame);
 
-        if (pcl::io::loadPCDFile<pcl::PointXYZ> (compress_day_path + "/pcds_subset/" + compress_frame , *cloud_compress) == -1) //* load the file
+        if (pcl::io::loadPCDFile<pcl::PointXYZ> (compress_day_path + "/pcds/" + compress_frame + ".pcd", *cloud_compress) == -1) //* load the file
         {
             PCL_ERROR ("Couldn't read file day 1  \n");
             return (-1);
         }
+        std::cout << "reading compressed pcds: done " << std::endl;
 
-        if (pcl::io::loadPCDFile<pcl::PointXYZ> (reference_day_path + "/pcds/" + reference_frame , *cloud_reference) == -1) //* load the file
+        if (pcl::io::loadPCDFile<pcl::PointXYZ> (reference_day_path + "/pcds/" + reference_frame +".pcd", *cloud_reference) == -1) //* load the file
         {
             PCL_ERROR ("Couldn't read file day 1  \n");
             return (-1);
         }
+        std::cout << "reading reference pcds: done " << std::endl;
+
+        pcl::io::savePCDFileASCII (compress_day_path+"/subset_pcds/" + compress_frame  +".pcd", *cloud_compress);
+
+
 
         std::vector<int> pointIdxRadiusSearch;
         std::vector<float> pointRadiusSquaredDistance;
@@ -198,7 +214,7 @@ float distance, float resolution, std::vector<float>& run_time_1, std::vector<fl
         centroid_ego.x =  std::stof(pose[1]);
         centroid_ego.y =  std::stof(pose[2]);
         centroid_ego.z =  std::stof(pose[3]);
-        //std::cout<<"pose rreading done "<<std::endl;
+        std::cout<<"pose rreading done "<<std::endl;
 
         Eigen::Matrix4f transformation_matrix = get_transformation_matrix(pose);
 
@@ -274,7 +290,6 @@ float distance, float resolution, std::vector<float>& run_time_1, std::vector<fl
 
 
 
-
             std::vector<int> indices_to_retain_from_add;
 
             for (std::size_t point_i = 0; point_i < change_add->size(); ++ point_i)
@@ -304,78 +319,78 @@ float distance, float resolution, std::vector<float>& run_time_1, std::vector<fl
         if (method==2)
         {
       
-            pcl::KdTreeFLANN<pcl::PointXYZ> tree_ref;
-            tree_ref.setInputCloud (cloud_reference);
+        //     pcl::KdTreeFLANN<pcl::PointXYZ> tree_ref;
+        //     tree_ref.setInputCloud (cloud_reference);
 
-            std::vector<int> new_indices;
-
-
-            int K =1 ;
-
-            for (std::size_t point_i = 0; point_i < cloud_compress->size(); ++ point_i)
-            {
-                std::vector<int> pointIdxNKNSearch(K);
-                std::vector<float> pointNKNSquaredDistance(K);
-                if ( tree_ref.nearestKSearch ((*cloud_compress)[point_i], K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
-                {
-                    for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
-                    {
-                        if ( pointNKNSquaredDistance[i] > resolution2 )
-                            new_indices.push_back(point_i);
-                    }   
-                }
-            }
+        //     std::vector<int> new_indices;
 
 
-            pcl::KdTreeFLANN<pcl::PointXYZ> tree_comp;
-            tree_comp.setInputCloud (cloud_compress);
-            for (std::size_t point_i = 0; point_i < cloud_reference->size(); ++ point_i)
-            {
-                std::vector<int> pointIdxNKNSearch(K);
-                std::vector<float> pointNKNSquaredDistance(K);
-                if ( tree_comp.nearestKSearch ((*cloud_reference)[point_i], K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
-                {
-                    for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
-                    {
-                        if ( pointNKNSquaredDistance[i] > resolution2 )
-                            indices_to_remove.push_back(point_i);
-                    }   
-                }
-            }
+        //     int K =1 ;
+
+        //     for (std::size_t point_i = 0; point_i < cloud_compress->size(); ++ point_i)
+        //     {
+        //         std::vector<int> pointIdxNKNSearch(K);
+        //         std::vector<float> pointNKNSquaredDistance(K);
+        //         if ( tree_ref.nearestKSearch ((*cloud_compress)[point_i], K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+        //         {
+        //             for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
+        //             {
+        //                 if ( pointNKNSquaredDistance[i] > resolution2 )
+        //                     new_indices.push_back(point_i);
+        //             }   
+        //         }
+        //     }
 
 
-            inliers->indices = new_indices;
-            extract.setInputCloud (cloud_compress);
-            extract.setIndices (inliers);
-            extract.setNegative (false);
-            extract.filter (*change_add);
+        //     pcl::KdTreeFLANN<pcl::PointXYZ> tree_comp;
+        //     tree_comp.setInputCloud (cloud_compress);
+        //     for (std::size_t point_i = 0; point_i < cloud_reference->size(); ++ point_i)
+        //     {
+        //         std::vector<int> pointIdxNKNSearch(K);
+        //         std::vector<float> pointNKNSquaredDistance(K);
+        //         if ( tree_comp.nearestKSearch ((*cloud_reference)[point_i], K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+        //         {
+        //             for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
+        //             {
+        //                 if ( pointNKNSquaredDistance[i] > resolution2 )
+        //                     indices_to_remove.push_back(point_i);
+        //             }   
+        //         }
+        //     }
 
-            pcl::transformPointCloud (*change_add, *change_add, transformation_matrix);
 
-            std::vector<int> indices_to_retain_from_add;
+        //     inliers->indices = new_indices;
+        //     extract.setInputCloud (cloud_compress);
+        //     extract.setIndices (inliers);
+        //     extract.setNegative (false);
+        //     extract.filter (*change_add);
 
-            for (std::size_t point_i = 0; point_i < change_add->size(); ++ point_i)
-            {
-                std::vector<int> pointIdxNKNSearch(K);
-                std::vector<float> pointNKNSquaredDistance(K);
-                if ( tree.nearestKSearch ((*change_add)[point_i], K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
-                {
-                    for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
-                    {
-                        if ( pointNKNSquaredDistance[i] <= resolution2 )
-                            indices_to_add.push_back(pointIdxNKNSearch[i]);
-                        else 
-                            indices_to_retain_from_add.push_back(point_i);
-                    }   
-                }
-            }
+        //     pcl::transformPointCloud (*change_add, *change_add, transformation_matrix);
 
-            inliers->indices = indices_to_retain_from_add;
-            extract.setInputCloud (change_add);
-            extract.setIndices (inliers);
-            extract.setNegative (false);
-            extract.filter (*change_add);
-            pcl::transformPointCloud (*change_add, *change_add, transformation_matrix.inverse());
+        //     std::vector<int> indices_to_retain_from_add;
+
+        //     for (std::size_t point_i = 0; point_i < change_add->size(); ++ point_i)
+        //     {
+        //         std::vector<int> pointIdxNKNSearch(K);
+        //         std::vector<float> pointNKNSquaredDistance(K);
+        //         if ( tree.nearestKSearch ((*change_add)[point_i], K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0 )
+        //         {
+        //             for (std::size_t i = 0; i < pointIdxNKNSearch.size (); ++i)
+        //             {
+        //                 if ( pointNKNSquaredDistance[i] <= resolution2 )
+        //                     indices_to_add.push_back(pointIdxNKNSearch[i]);
+        //                 else 
+        //                     indices_to_retain_from_add.push_back(point_i);
+        //             }   
+        //         }
+        //     }
+
+        //     inliers->indices = indices_to_retain_from_add;
+        //     extract.setInputCloud (change_add);
+        //     extract.setIndices (inliers);
+        //     extract.setNegative (false);
+        //     extract.filter (*change_add);
+        //     pcl::transformPointCloud (*change_add, *change_add, transformation_matrix.inverse());
         }
 
 
@@ -455,7 +470,7 @@ std::vector<std::string> get_pose(std::string path, std::string frame_number){
 
     while(getline (pose_file, line)) 
     {   
-        std::vector<std::string> split_line = splitString(line, ',');
+        std::vector<std::string> split_line = splitString(line, ' ');
         if (frame_number == split_line[0]) 
             return split_line;
     }
